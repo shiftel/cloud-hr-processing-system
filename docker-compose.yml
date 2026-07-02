@@ -1,0 +1,77 @@
+services:
+  candidate-service:
+    build: ./candidate-service
+    container_name: candidate-service
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_URL=jdbc:postgresql://${DB_HOST}:5432/candidate_service
+      - DB_USER=${AWS_RDS_USER}
+      - DB_PASSWORD=${AWS_RDS_PASSWORD}
+      - RABBITMQ_URI=${RABBITMQ_URI}
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+    restart: on-failure
+    networks:
+      - cloud-network
+
+  document-analysis-service:
+    build: ./document-analysis-service
+    container_name: document-analysis-service
+    ports:
+      - "8082:8082"
+    environment:
+      - DB_URL=jdbc:postgresql://${DB_HOST}:5432/document_analysis_service
+      - DB_USER=${AWS_RDS_USER}
+      - DB_PASSWORD=${AWS_RDS_PASSWORD}
+      - RABBITMQ_URI=${RABBITMQ_URI}
+    restart: on-failure
+    networks:
+      - cloud-network
+
+  hr-notification-service:
+    build: ./hr-notification-service
+    container_name: hr-notification-service
+    ports:
+      - "8083:8083"
+    environment:
+      - DB_URL=jdbc:postgresql://${DB_HOST}:5432/hr_notification_service
+      - DB_USER=${AWS_RDS_USER}
+      - DB_PASSWORD=${AWS_RDS_PASSWORD}
+      - RABBITMQ_URI=${RABBITMQ_URI}
+    restart: on-failure
+    networks:
+      - cloud-network
+
+  skill-extractor-service:
+    build: ./skill-extractor-service
+    container_name: skill-extractor-service
+    ports:
+      - "8084:8084"
+    environment:
+      - DB_URL=jdbc:postgresql://${DB_HOST}:5432/skill_extractor_service
+      - DB_USER=${AWS_RDS_USER}
+      - DB_PASSWORD=${AWS_RDS_PASSWORD}
+      - RABBITMQ_URI=${RABBITMQ_URI}
+    restart: on-failure
+    networks:
+      - cloud-network
+
+  verification-service:
+    build: ./verification-service
+    container_name: verification-service
+    ports:
+      - "8085:8085"
+    environment:
+      - DB_URL=jdbc:postgresql://${DB_HOST}:5432/verification_service
+      - DB_USER=${AWS_RDS_USER}
+      - DB_PASSWORD=${AWS_RDS_PASSWORD}
+      - RABBITMQ_URI=${RABBITMQ_URI}
+    restart: on-failure
+    networks:
+      - cloud-network
+
+networks:
+  cloud-network:
+    driver: bridge

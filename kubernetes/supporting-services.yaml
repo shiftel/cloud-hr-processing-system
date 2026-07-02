@@ -1,0 +1,182 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skill-extractor-service
+  namespace: cloud2
+  labels:
+    app: skill-extractor-service
+    version: "1.0"
+    component: microservice-4
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: skill-extractor-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: skill-extractor-service
+        version: "1.0"
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: skill-extractor-service
+          image: skill-extractor-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8084
+              protocol: TCP
+          env:
+            - name: DB_URL
+              value: "jdbc:postgresql://database-laby-chmury.cfwkgaeacvgh.eu-north-1.rds.amazonaws.com:5432/skill_extractor_db"
+            - name: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+              value: "2"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cloud2-secrets
+                  key: AWS_RDS_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cloud2-secrets
+                  key: AWS_RDS_PASSWORD
+            - name: RABBITMQ_URI
+              valueFrom:
+                secretKeyRef:
+                  name: cloud2-secrets
+                  key: RABBITMQ_URI
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            tcpSocket:
+              port: 8084
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 8084
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skill-extractor-service
+  namespace: cloud2
+  labels:
+    app: skill-extractor-service
+spec:
+  selector:
+    app: skill-extractor-service
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8084
+      targetPort: 8084
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: verification-service
+  namespace: cloud2
+  labels:
+    app: verification-service
+    version: "1.0"
+    component: microservice-5
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: verification-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: verification-service
+        version: "1.0"
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: verification-service
+          image: verification-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8085
+              protocol: TCP
+          env:
+            - name: DB_URL
+              value: "jdbc:postgresql://database-laby-chmury.cfwkgaeacvgh.eu-north-1.rds.amazonaws.com:5432/verification_db"
+            - name: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+              value: "2"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cloud2-secrets
+                  key: AWS_RDS_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cloud2-secrets
+                  key: AWS_RDS_PASSWORD
+            - name: RABBITMQ_URI
+              valueFrom:
+                secretKeyRef:
+                  name: cloud2-secrets
+                  key: RABBITMQ_URI
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            tcpSocket:
+              port: 8085
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 8085
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: verification-service
+  namespace: cloud2
+  labels:
+    app: verification-service
+spec:
+  selector:
+    app: verification-service
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8085
+      targetPort: 8085
+  type: ClusterIP
+
+

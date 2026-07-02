@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cloud2
+  labels:
+    app: cloud2-app
+    environment: production

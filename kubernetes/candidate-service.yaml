@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: candidate-service
+  namespace: cloud2
+  labels:
+    app: candidate-service
+    version: "1.0"
+    component: microservice-1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: candidate-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: candidate-service
+        version: "1.0"
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: candidate-service
+          image: candidate-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+              protocol: TCP
+          env:
+            - name: DB_URL
+              value: "jdbc:postgresql://database-laby-chmury.cfwkgaeacvgh.eu-north-1.rds.amazonaws.com:5432/candidate_db"
+            - name: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+              value: "2"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cloud2-secrets
+                  key: AWS_RDS_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cloud2-secrets
+                  key: AWS_RDS_PASSWORD
+            - name: RABBITMQ_URI
+              valueFrom:
+                secretKeyRef:
+                  name: cloud2-secrets
+                  key: RABBITMQ_URI
+            - name: AWS_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cloud2-secrets
+                  key: AWS_ACCESS_KEY
+            - name: AWS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cloud2-secrets
+                  key: AWS_SECRET_KEY
+            - name: S3_BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: cloud2-secrets
+                  key: S3_BUCKET_NAME
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: candidate-service
+  namespace: cloud2
+  labels:
+    app: candidate-service
+spec:
+  selector:
+    app: candidate-service
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8081
+      targetPort: 8081
+  type: ClusterIP
+
